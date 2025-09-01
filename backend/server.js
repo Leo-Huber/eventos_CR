@@ -1,21 +1,27 @@
-// backend/server.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const mysql = require('mysql'); // cambiar dependiendo de que use sistemas, instalar mysql2 o pg si es postgresql
+const mssql = require('mssql'); 
+const productosRouter = require('./bd/productos.js');
+require('dotenv').config();
 
 const app = express();
 const port = 3001;
 
-// Conexión a la base de datos sql, segun gente de sistemas cuando esté el ok
-const db = mysql.createConnection({
-  host: 'http://localhost:3001', 
-  user: 'username',
-  password: 'password',
-  database: 'tu_base_de_datos',
-});
+// Configuración de conexión para SQL Server
+const dbConfig = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER,
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: false,
+    trustServerCertificate: true,
+  },
+};
 
-db.connect(err => {
+// Probar conexión al iniciar el servidor
+mssql.connect(dbConfig, err => {
   if (err) {
     console.error('Error conectando a la base de datos:', err);
     return;
@@ -24,41 +30,19 @@ db.connect(err => {
 });
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173' })); // Permite solicitudes desde el frontend de Vite para cambios locales
+app.use(cors({ origin: 'http://localhost:5173' }));
 app.use(bodyParser.json());
+app.use(productosRouter); 
 
-// Rutas de la API de banners
-app.get('/api/banners', (req, res) => {
-  const sql = 'SELECT * FROM banners';
-  db.query(sql, (err, result) => {
-    if (err) throw err;
-    res.send(result);
-  });
-});
-
-app.post('/api/banners', (req, res) => {
-  const { title, imageUrl, link } = req.body;
-
-  // Validación del lado del servidor
-  if (!title || !imageUrl) {
-    return res.status(400).send('El título y la URL de la imagen son requeridos.');
+// Ejemplo de ruta para probar conexión
+app.get('/api/ping', async (req, res) => {
+  try {
+    const pool = await mssql.connect(dbConfig);
+    const result = await pool.request().query('SELECT 1 as ok');
+    res.json({ conectado: true, resultado: result.recordset });
+  } catch (err) {
+    res.status(500).json({ conectado: false, error: err.message });
   }
-
-  const sql = 'INSERT INTO banners (title, imageUrl, link) VALUES (?, ?, ?)';
-  // Usar sentencias preparadas para prevenir inyecciones SQL
-  db.query(sql, [title, imageUrl, link], (err, result) => {
-    if (err) throw err;
-    res.status(201).send({ id: result.insertId, ...req.body });
-  });
-});
-
-app.delete('/api/banners/:id', (req, res) => {
-  const { id } = req.params;
-  const sql = 'DELETE FROM banners WHERE id = ?';
-  db.query(sql, [id], (err, result) => {
-    if (err) throw err;
-    res.send(`Banner con id ${id} eliminado.`);
-  });
 });
 
 app.listen(port, () => {

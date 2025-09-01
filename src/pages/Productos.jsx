@@ -20,14 +20,14 @@ const Products = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('https://fakestoreapi.com/products?limit=10'); // Limita los productos para un ejemplo
+        const response = await fetch('http://localhost:3001/productos'); //Conexion a la tabla de productos
         if (!response.ok) {
           throw new Error('Problema al obtener los productos');
         }
         const data = await response.json();
         setProducts(data);
       } catch (error) {
-        console.error('Error al omtener productos:', error);
+        console.error('Error al obtener productos:', error);
       } finally {
         setLoading(false);
       }
@@ -57,16 +57,16 @@ const Products = () => {
                 <TableCell>Codigo</TableCell>
                 <TableCell>Producto</TableCell>
                 <TableCell>Precio</TableCell>
-                <TableCell>Categoría</TableCell>
+                <TableCell>Stock</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {products.map((product) => (
                 <TableRow key={product.id}>
-                  <TableCell>{product.id}</TableCell>
-                  <TableCell>{product.title}</TableCell>
-                  <TableCell>Gs.{product.price}</TableCell>
-                  <TableCell>{product.category}</TableCell>
+                  <TableCell>{product.cod_producto}</TableCell>
+                  <TableCell>{product.producto}</TableCell>
+                  <TableCell>Gs.{product.precio}</TableCell>
+                  <TableCell>{product.stock}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
