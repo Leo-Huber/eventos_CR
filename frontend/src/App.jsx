@@ -8,48 +8,46 @@ import Users from './pages/Usuarios';
 import Products from './pages/Productos';
 import BannersList from './pages/BannersList';
 import AddBanner from './pages/AddBanner';
-import axios from 'axios';
+import http from './lib/http';
 
-const App = () => {
+export default function App() {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchBanners = async () => {
+  async function fetchBanners() {
     try {
-      const response = await axios.get('http://localhost:3001/api/banners');
-      setBanners(response.data);
+      const { data } = await http.get('/api/banners');
+      setBanners(data);
       setLoading(false);
     } catch (err) {
       console.error('Error al obtener los banners:', err);
       setError('Error al cargar los banners.');
       setLoading(false);
     }
-  };
+  }
 
-  useEffect(() => {
-    fetchBanners();
-  }, []);
+  useEffect(() => { fetchBanners(); }, []);
 
-  const handleAddBanner = async (newBanner) => {
+  async function handleAddBanner(newBanner) {
     try {
-      await axios.post('http://localhost:3001/api/banners', newBanner);
-      fetchBanners(); // Refresca la lista
+      await http.post('/api/banners', newBanner);
+      fetchBanners();
     } catch (err) {
       console.error('Error al añadir banner:', err);
       setError('Error al añadir el banner.');
     }
-  };
+  }
 
-  const handleDeleteBanner = async (id) => {
+  async function handleDeleteBanner(id) {
     try {
-      await axios.delete(`http://localhost:3001/api/banners/${id}`);
-      fetchBanners(); // Refresca la lista
+      await http.delete(`/api/banners/${id}`);
+      fetchBanners();
     } catch (err) {
       console.error('Error al eliminar banner:', err);
       setError('Error al eliminar el banner.');
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -76,6 +74,4 @@ const App = () => {
       </Box>
     </Box>
   );
-};
-
-export default App;
+}
